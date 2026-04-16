@@ -14,11 +14,15 @@ public class App3 {
 		
 		var pathA = Path.of("/home/alex/git/java-classloader/project-a/target/project-a-0.0.1-SNAPSHOT.jar");
 		var urlA = pathA.toUri().toURL();
-		var clA = new ProjectClassLoader(new URL[] {urlA}, composite);
+		var clA = new ProjectClassLoader(new URL[] {urlA});
+		//var clA = new ProjectClassLoader(new URL[] {urlA}, composite);
+		clA.composite = composite;
 		
 		var pathB = Path.of("/home/alex/git/java-classloader/project-b/target/project-b-0.0.1-SNAPSHOT.jar");
 		var urlB = pathB.toUri().toURL();
-		var clB = new ProjectClassLoader(new URL[] {urlB}, composite);
+		var clB = new ProjectClassLoader(new URL[] {urlB});
+		//var clB = new ProjectClassLoader(new URL[] {urlB}, composite);
+		clB.composite = composite;
 
 		var cls = List.of(clA, clB);
 		
@@ -76,6 +80,13 @@ public class App3 {
 	
 	
 	public static class ProjectClassLoader extends URLClassLoader {
+		
+		CompositeClassLoader composite;
+		
+		public ProjectClassLoader(URL[] urls) {
+			super(urls);
+		}
+		
 		public ProjectClassLoader(URL[] urls, ClassLoader cl) {
 			super(urls, cl);
 		}
@@ -91,7 +102,7 @@ public class App3 {
 				return super.loadClass(name);
 			} catch (ClassNotFoundException ex) {
 				if (cl instanceof ProjectClassLoader pcl) {
-					return pcl.loadClass(name);
+					return composite.loadClass(name);
 				}
 				throw ex;
 			}
@@ -110,7 +121,7 @@ public class App3 {
 				return super.findClass(name);
 			} catch (ClassNotFoundException ex) {
 				if (cl instanceof ProjectClassLoader pcl) {
-					return pcl.findClass(name);
+					return composite.findClass(name);
 				}
 				throw ex;
 			}

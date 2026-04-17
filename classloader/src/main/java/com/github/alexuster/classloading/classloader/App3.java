@@ -12,13 +12,13 @@ public class App3 {
 	
 		var composite = new CompositeClassLoader();
 		
-		var pathA = Path.of("/home/alex/git/java-classloader/project-a/target/project-a-0.0.1-SNAPSHOT.jar");
+		var pathA = Path.of("C:\\dev\\tryout\\java-classloader\\project-a\\target\\project-a-0.0.1-SNAPSHOT.jar");
 		var urlA = pathA.toUri().toURL();
 		var clA = new ProjectClassLoader(new URL[] {urlA});
 		//var clA = new ProjectClassLoader(new URL[] {urlA}, composite);
 		clA.composite = composite;
 		
-		var pathB = Path.of("/home/alex/git/java-classloader/project-b/target/project-b-0.0.1-SNAPSHOT.jar");
+		var pathB = Path.of("C:\\dev\\tryout\\java-classloader\\project-b/target/project-b-0.0.1-SNAPSHOT.jar");
 		var urlB = pathB.toUri().toURL();
 		var clB = new ProjectClassLoader(new URL[] {urlB});
 		//var clB = new ProjectClassLoader(new URL[] {urlB}, composite);
@@ -46,38 +46,23 @@ public class App3 {
 		
 		@Override
 		public Class<?> loadClass(String name) throws ClassNotFoundException {
-		  return loadClass(name, this);
+			return loadClassFromApplication(name, this);
 		}
-		
-		public Class<?> loadClass(String name, ClassLoader origin) throws ClassNotFoundException {
-			  for (var cl : cls) {
-				   try {
-					 return  cl.loadClass(name, origin);
-				   } catch (ClassNotFoundException ex) {
-					  // silence
-				   }
-			  }
-			  return super.loadClass(name);
+
+		public Class<?> loadClassFromApplication(String name, ClassLoader origin) throws ClassNotFoundException {
+			for (var cl : cls) {
+				if (cl == origin) {
+					continue;
+				}
+				try {
+					return cl.loadlClassFromProject(name);
+				} catch (ClassNotFoundException ex) {
+					// silence
+				}
 			}
-		
-		@Override
-		protected Class<?> findClass(String name) throws ClassNotFoundException {
-			return findClass(name, this);
-		}
-		
-		protected Class<?> findClass(String name, ClassLoader origin) throws ClassNotFoundException {
-			// TODO Auto-generated method stub
-			  for (var cl : cls) {
-				   try {
-					 return  cl.findClass(name, origin);
-				   } catch (ClassNotFoundException ex) {
-					  // silence
-				   }
-			  }
-			  return super.findClass(name);
+			return super.loadClass(name);
 		}
 	}
-	
 	
 	public static class ProjectClassLoader extends URLClassLoader {
 		
@@ -93,38 +78,15 @@ public class App3 {
 		
 		@Override
 		public Class<?> loadClass(String name) throws ClassNotFoundException {
-			return loadClass(name, this);
-		}
-		
-		public Class<?> loadClass(String name, ClassLoader cl) throws ClassNotFoundException {
-			
 			try {
-				return super.loadClass(name);
+				return composite.loadClassFromApplication(name, this);
 			} catch (ClassNotFoundException ex) {
-				if (cl instanceof ProjectClassLoader pcl) {
-					return composite.loadClass(name);
-				}
-				throw ex;
+				return loadlClassFromProject(name);
 			}
 		}
-		
-		
-		@Override
-		public Class<?> findClass(String name) throws ClassNotFoundException {
-			return findClass(name, this);
-		}
-		
-		public Class<?> findClass(String name, ClassLoader cl) throws ClassNotFoundException {
-			// PL.findClass(ClassLoader origin) searches class inside its repos. If not found calls Composite.findClass(origin) if origin is not composite
 			
-			try {
-				return super.findClass(name);
-			} catch (ClassNotFoundException ex) {
-				if (cl instanceof ProjectClassLoader pcl) {
-					return composite.findClass(name);
-				}
-				throw ex;
-			}
+		public Class<?> loadlClassFromProject(String name) throws ClassNotFoundException {
+			return super.loadClass(name);
 		}
 	}
 }
